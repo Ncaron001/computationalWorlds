@@ -14,17 +14,14 @@ function GameEngine() {
     this.ctx = null;
     this.surfaceWidth = null;
     this.surfaceHeight = null;
-    this.test = Date.now() / 1000;
-    this.gameTime = null;
+
 }
 
 GameEngine.prototype.init = function (ctx) {
     this.ctx = ctx;
     this.surfaceWidth = this.ctx.canvas.width;
     this.surfaceHeight = this.ctx.canvas.height;
-
     this.timer = new Timer();
-    this.test = Date.now() / 1000;
     console.log('game initialized');
 }
 
@@ -77,7 +74,6 @@ Timer.prototype.tick = function () {
     var wallCurrent = Date.now();
     var wallDelta = (wallCurrent - this.wallLastTimestamp) / 1000;
     this.wallLastTimestamp = wallCurrent;
-
     var gameDelta = Math.min(wallDelta, this.maxStep);
     this.gameTime += gameDelta;
     return gameDelta;

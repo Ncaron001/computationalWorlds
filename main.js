@@ -1,4 +1,47 @@
 var AM = new AssetManager();
+var dataList = {yLeftBumper: 100, leftBumperSpeed: 3, yRightBumper: 100, rightBumperSpeed: 3, ball1X: 0, ball1Y: 0, ball1deltaX: 1, ball1deltaY: 1, ball2X: 0, ball2Y: 0, ball2deltaX: 1, ball2deltaY: 1, score1: 0, score2: 0 };
+
+window.onload = function (gameEngine) {
+    var socket = io.connect("http://24.16.255.56:8888");
+    this.gameEngine = gameEngine;
+  
+    socket.on("load", function (data) {
+        dataList.yLeftBumper = data.yLeftBumper;
+        dataList.yRightBumper = data.yRightBumper;
+        dataList.leftBumperSpeed = data.leftBumperSpeed;
+        dataList.rightBumperSpeed = data.rightBumperSpeed;
+        dataList.ball1X = data.ball1X;
+        dataList.ball1Y = data.ball1Y;
+        dataList.ball2X = data.ball2X;
+        dataList.ball2Y = data.ball2Y;
+        dataList.score1 = data.score1;
+        dataList.score2 = data.score2;
+
+        console.log(data.statename);
+    });
+  
+    var text = document.getElementById("text");
+    var saveButton = document.getElementById("save");
+    var loadButton = document.getElementById("load");
+  
+    saveButton.onclick = function () {
+      console.log("save");
+      text.innerHTML = "Saved."
+      socket.emit("save", { studentname: "Nicholas Caron", statename: "anything else", yLeftBumper: dataList.yLeftBumper
+                   , leftBumperSpeed: dataList.leftBumperSpeed, yRightBumper: dataList.yRightBumper
+                   , rightBumperSpeed: dataList.rightBumperSpeed, ball1X: dataList.ball1X, ball1Y: dataList.ball1Y
+                   , ball2X: dataList.ball2X, ball2Y: dataList.ball2Y, score1: dataList.score1, score2: dataList.score2
+                   , ball1deltaX: dataList.ball1deltaX, ball1deltaY: dataList.ball1deltaY, ball2deltaX : dataList.ball2deltaX, ball2deltaY: dataList.ball2deltaY});
+    };
+  
+    loadButton.onclick = function () {
+      console.log("load");
+      text.innerHTML = "Loaded."
+      this.score = "Left Score: " + dataList.score1 + " Right Score: " + dataList.score2;
+      socket.emit("load", { studentname: "Nicholas Caron", statename: "anything else"});
+    };
+  
+  };
 
 
 function Animation(spriteSheet, frameWidth, frameHeight, sheetWidth, frameDuration, frames, loop, scale) {
@@ -64,180 +107,451 @@ Background.prototype.update = function(){
 
 };
 
-function Bellmont(game, spritesheetWalk, spritesheetJump, spritesheetDown, spritesheetIdle, spritesheetStanding){
-    this.animation = new Animation(spritesheetWalk,16,32,400, 8, 4, true, 2);
-    this.jumpAnimation = new Animation(spritesheetJump,16,32,50, 1, 2, true, 2);
-    this.fallAnimation = new Animation(spritesheetDown,16,32,400, .5, 4, true, 2);
-    this.idleAnimation = new Animation(spritesheetIdle,18,32,200, .5, 1, false, 2);
-    this.standingAnimation = new Animation(spritesheetStanding,18,32,40, .5, 1, true, 2);
-    this.speedX = 1;
-    this.speedY = 0;
-    this.ctx = game.ctx;
-    Entity.call(this, game, 0, 520);
+function leftBumper(gameEngine, ctx){
+    this.gameEngine = gameEngine;
+    this.ball = this.gameEngine.entities[0];
+    this.ctx = ctx;
+    this.x = 30;
+    this.y = dataList.yLeftBumper;
+    this.speed = dataList.leftBumperSpeed;
+    this.width = 20;
+    this.height = 100;
+    this.leftRect = {x:this.x, y: this.y, width: this.width, height: this.height}; 
+    this.ball1 = this.gameEngine.entities[0];
+    this.ball2 = this.gameEngine.entities[9];
 };
 
-Bellmont.prototype = new Entity();
-Bellmont.prototype.constructor = Bellmont;
+leftBumper.prototype = new Entity();
+leftBumper.prototype.constructor = leftBumper;
 
-Bellmont.prototype.draw = function(){
-    if(this.x < 60){
-        this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
-    }
-    else if(this.x < 190){
-        this.jumpAnimation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
-        this.speedX += .1;
-        this.speedY =-2;
-    }
-    else if(this.x < 200){
-        this.fallAnimation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
-        this.speedX -=.1;
-        this.speedY = 1;
-    }
-    else if(this.x < 250){
-        this.speedX = .5;
-        this.speedY = 0;
-        this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
+leftBumper.prototype.draw = function(){
+    this.ctx.fillStyle = "white";
+    this.ctx.fillRect(this.x,this.y,this.width,this.height);
+    //this.ctx.fillStyle = "red";
+    //this.ctx.fillRect(this.leftRect.x,this.leftRect.y,this.leftRect.width,this.leftRect.height);
+};
 
+leftBumper.prototype.update = function(){
+    this.ball2 = this.gameEngine.entities[9];
+    if(this.y != dataList.yLeftBumper){
+         this.ball1.x = dataList.ball1X;
+         this.ball1.y = dataList.ball1Y;
+         this.ball1.deltaX = dataList.ball1deltaX;
+         this.ball1.deltaY = dataList.ball1deltaY;
+         if(this.ball2 != null){
+         this.ball2.x = dataList.ball2X;
+         this.ball2.y = dataList.ball2Y;
+         this.ball2.deltaX = dataList.ball2deltaX;
+         this.ball2.deltaY = dataList.ball2deltaY;
+         }
     }
-    else if(this.game.gameTime >= 12){
-        this.speedX = 7;
-        this.speedY = 0;
-        this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
+    this.y = dataList.yLeftBumper;
+    this.distance1 = Math.sqrt(Math.pow(this.gameEngine.entities[0].x - this.x, 2) + Math.pow(this.gameEngine.entities[0].y - this.y, 2));
+    this.distance2 = Math.sqrt(Math.pow(this.gameEngine.entities[9].x - this.x,2) + Math.pow(this.gameEngine.entities[9].y - this.y,2));
+    if(this.distance1 <= this.distance2){
+        this.ball = this.gameEngine.entities[0];
     }
     else{
-        this.speedY = 0;
-        this.speedX = 0;
-        this.idleAnimation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 4)
-        if(this.idleAnimation.isDone()){
-           this.standingAnimation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
-        }
+        this.ball = this.gameEngine.entities[9];
     }
-        Entity.prototype.draw.call(this);
-};
-
-Bellmont.prototype.update = function(){
-    this.x += this.speedX;
-    this.y += this.speedY
-    this.animation.elapsedTime += 1;
-    this.animation.time +=1;
-};
-function Godzilla(game, spritesheet, spritesheetKick, spritesheetRampage){
-    this.animation = new Animation(spritesheet,74,70,600, .5, 8, true, 6);
-    this.standing = new Animation(spritesheetKick,74,70,600, 1, 1, true, 6);
-    this.rampage = new Animation(spritesheetRampage,78,70,397, 1, 2, true, 6);
-    this.ctx = game.ctx;
-    this.x = 0;
-    this.y = 0;
-    Entity.call(this, game, -600, 200);
-};
-
-Godzilla.prototype = new Entity();
-Godzilla.prototype.constructor = Orb;
-
-Godzilla.prototype.draw = function(){
-    if(this.game.gameTime < 10){
-        this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
+    this.leftRect = {x:this.x, y: this.y, width: this.width, height: this.height}; 
+    if(this.y > 595){
+        this.y -= this.speed;
     }
-    else if(this.game.gameTime < 12){
-        this.standing.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
+    if(this.y < 5){
+        this.y +=this.speed;
     }
-    else{
-        this.rampage.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
+    
+    if(this.ball.y +10 > this.y + (this.height /2)){
+        this.y +=this.speed;
     }
-
-};
-
-Godzilla.prototype.update = function(){
-    if(this.game.gameTime > 3 && this.game.gameTime < 10){
-        this.x += 1;
+    else if(this.ball.y +10< this.y + (this.height/2)){
+        this.y -= this.speed;
+    }
+    dataList.yLeftBumper = this.y;
+    dataList.ball1X = this.ball1.x;
+    dataList.ball1Y = this.ball1.y;
+    dataList.ball1deltaX = this.ball1.deltaX;
+    dataList.ball1deltaY = this.ball1.deltaY;
+    if(this.ball2 != null){
+        dataList.ball2X = this.ball2.x;
+        dataList.ball2Y = this.ball2.y;
+        dataList.ball2deltaX = this.ball2.deltaX;
+        dataList.ball2deltaY = this.ball2.deltaY;
     }
 };
 
-
-function Orb(game, spritesheetRed, spritesheetBlue){
-    this.animation = new Animation(spritesheetRed,32,35,192, .2, 6, true, 3);
-    this.animation2 = new Animation(spritesheetBlue,32,35,192, .5, 6, true, 3);
-    this.ctx = game.ctx;
-    this.x = 0;
-    this.y = 0;
-    Entity.call(this, game, 359, 250);
- 
+function rightBumper(gameEngine, ctx){
+    this.gameEngine = gameEngine;
+    this.ball = this.gameEngine.entities[0]; 
+    this.ctx = ctx;
+    this.x = 950;
+    this.y = 500;
+    this.speed = 4;
+    this.width = 20;
+    this.height = 100; 
+    this.rightRect = {x:this.x, y: this.y, width: this.width, height: this.height};
 };
 
-Orb.prototype = new Entity();
-Orb.prototype.constructor = Orb;
+rightBumper.prototype = new Entity();
+rightBumper.prototype.constructor = rightBumper;
 
-Orb.prototype.draw = function(){
-    if(this.game.gameTime < 5){
-        this.animation2.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
-    }
-    else if(this.game.gameTime < 9){
-        this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
-        this.animation2.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
+rightBumper.prototype.draw = function(){
+    this.ctx.fillStyle = "white";
+    this.ctx.fillRect(this.x,this.y,this.width,this.height);
+    //this.ctx.fillStyle = "red";
+    //this.ctx.fillRect(this.rightRect.x,this.rightRect.y,this.rightRect.width,this.rightRect.height);
+};
+
+rightBumper.prototype.update = function(){
+    this.y = dataList.yRightBumper;
+    this.distance1 = Math.sqrt(Math.pow(this.gameEngine.entities[0].x - this.x, 2) + Math.pow(this.gameEngine.entities[0].y - this.y, 2));
+    this.distance2 = Math.sqrt(Math.pow(this.gameEngine.entities[9].x - this.x,2) + Math.pow(this.gameEngine.entities[9].y - this.y,2));
+    if(this.distance1 <= this.distance2){
+        this.ball = this.gameEngine.entities[0];
     }
     else{
-        this.animation.drawFrame(this.game.clockTick, this.ctx, this.x, this.y, 1);
+        this.ball = this.gameEngine.entities[9];
     }
-};
-
-Orb.prototype.update = function(){
-
-};
-
-function GameTimer(game){
-    this.game = game;
-    this.ctx = game.ctx;
-    //this.gameTime = null;
-};
-GameTimer.prototype = new Entity();
-GameTimer.prototype.constructor = GameTimer;
-GameTimer.prototype.draw = function(){
-    this.ctx.font="30px Arial";
-    this.ctx.fillStyle = "aqua";
-    if(this.game.gameTime >=9){
-        this.ctx.fillStyle = "red";
+    this.rightRect = {x:this.x, y: this.y, width: this.width, height: this.height};
+    if(this.y > 595){
+        this.y -= this.speed;
     }
-    this.ctx.fillText("Time: " + this.game.gameTime, 10, 50)
-};
-GameTimer.prototype.update = function(){
-    this.game.gameTime = Date.now()/ 1000;
-    this.game.gameTime -= this.game.test;
-    this.game.gameTime = this.game.gameTime.toString();
-    this.game.gameTime = this.game.gameTime.substring(0, this.game.gameTime.indexOf("."));
+    if(this.y < 5){
+        this.y +=this.speed;
+    }
+    
+    if(this.ball.y +10 > this.y + (this.height /2)){
+        this.y +=this.speed;
+    }
+    else if(this.ball.y +10< this.y + (this.height/2)){
+        this.y -= this.speed;
+    }
+    dataList.yRightBumper = this.y;
 };
 
+
+function ball(gameEngine, ctx){
+    this.gameEngine = gameEngine;
+    this.leftBumper = null;
+    this.rightBumper = null;
+    this.ctx = ctx;
+    this.x = 500;
+    this.y = 400;
+    this.deltaX = (Math.random() *4) -3; 
+    this.deltaY = (Math.random() * 4) -3;
+    this.width = 20;
+    this.height = 20; 
+    this.ballRect = {x:this.x - 20, y: this.y -20, width: this.width *2, height: this.height*2};
+};
+
+ball.prototype = new Entity();
+ball.prototype.constructor = ball;
+
+ball.prototype.draw = function(){
+    this.ctx.fillStyle = "white";
+    this.ctx.beginPath();
+    this.ctx.arc(this.x, this.y,20,0,2* Math.PI);
+    this.ctx.fill();
+
+};
+
+ball.prototype.update = function(){
+
+    this.leftBumper = this.gameEngine.entities[1];
+    this.rightBumper = this.gameEngine.entities[2];
+    this.box1 = this.gameEngine.entities[5];
+    this.box2 = this.gameEngine.entities[6];
+    this.box3 = this.gameEngine.entities[7];
+    this.box4 = this.gameEngine.entities[8];
+
+    var rect2 =this.ballRect;
+    var rect1 =this.leftBumper.leftRect;
+
+    if(rect1.x < rect2.x + rect2.width 
+        && rect1.x + rect1.width > rect2.x 
+        && rect1.y < rect2.y + rect2.height 
+        && rect1.height + rect1.y > rect2.y){
+
+            // this is for the ball hitting from the top or bottom so it reverses its y direction
+            if(this.x >= rect1.x && this.x <= rect1.x + rect1.width){
+                this.deltaY = this.deltaY * -1;
+                if(this.y <= rect1.y){
+                    this.y -= 5;
+                }
+                else{
+                    this.y += 5;
+                }
+            }
+
+            //this is if the ball hits on the side so it reverses its x direction
+            else if(this.y >= rect1.y && this.y <= rect1.y + rect1.height){
+                this.deltaX = this.deltaX * -1;
+                if(this.x <= rect1.x){
+                    this.x -=5;
+                }
+                else{
+                    this.x += 5;
+                }
+            }
+        };
+        
+        
+
+        var rect1 =this.rightBumper.rightRect;
+        if(rect1.x < rect2.x + rect2.width 
+            && rect1.x + rect1.width > rect2.x 
+            && rect1.y < rect2.y + rect2.height 
+            && rect1.height + rect1.y > rect2.y){
+                if(this.x >= rect1.x && this.x <= rect1.x + rect1.width){
+                    this.deltaY = this.deltaY * -1;
+                    if(this.y <= rect1.y){
+                        this.y -= 5;
+                    }
+                    else{
+                        this.y += 5;
+                    }
+                }
+                else if(this.y >= rect1.y && this.y <= rect1.y + rect1.height){
+                    this.deltaX = this.deltaX * -1;
+                    if(this.x <= rect1.x){
+                        this.x -=5;
+                    }
+                    else{
+                        this.x += 5;
+                    }
+                }
+            }; 
+    
+        var rect1 =this.box1.boxRect;
+        if(rect1.x < rect2.x + rect2.width 
+            && rect1.x + rect1.width > rect2.x 
+            && rect1.y < rect2.y + rect2.height 
+            && rect1.height + rect1.y > rect2.y){
+                if(this.x >= rect1.x && this.x <= rect1.x + rect1.width){
+                    this.deltaY = this.deltaY * -1;
+                    if(this.y <= rect1.y){
+                        this.y -= 5;
+                    }
+                    else{
+                        this.y += 5;
+                    }
+                }
+                else if(this.y >= rect1.y && this.y <= rect1.y + rect1.height){
+                    this.deltaX = this.deltaX * -1;
+                    if(this.x <= rect1.x){
+                        this.x -=5;
+                    }
+                    else{
+                        this.x += 5;
+                    }
+                }
+            }; 
+    
+            var rect1 =this.box2.boxRect;
+            if(rect1.x < rect2.x + rect2.width 
+                && rect1.x + rect1.width > rect2.x 
+                && rect1.y < rect2.y + rect2.height 
+                && rect1.height + rect1.y > rect2.y){
+                    if(this.x >= rect1.x && this.x <= rect1.x + rect1.width){
+                        this.deltaY = this.deltaY * -1;
+                        if(this.y <= rect1.y){
+                            this.y -= 5;
+                        }
+                        else{
+                            this.y += 5;
+                        }
+                    }
+                    else if(this.y >= rect1.y && this.y <= rect1.y + rect1.height){
+                        this.deltaX = this.deltaX * -1;
+                        if(this.x <= rect1.x){
+                            this.x -=5;
+                        }
+                        else{
+                            this.x += 5;
+                        }
+                    }
+                }; 
+    
+                var rect1 =this.box3.boxRect;
+                if(rect1.x < rect2.x + rect2.width 
+                    && rect1.x + rect1.width > rect2.x 
+                    && rect1.y < rect2.y + rect2.height 
+                    && rect1.height + rect1.y > rect2.y){
+                        if(this.x >= rect1.x && this.x <= rect1.x + rect1.width){
+                            this.deltaY = this.deltaY * -1;
+                            if(this.y <= rect1.y){
+                                this.y -= 5;
+                            }
+                            else{
+                                this.y += 5;
+                            }
+                        }
+                        else if(this.y >= rect1.y && this.y <= rect1.y + rect1.height){
+                            this.deltaX = this.deltaX * -1;
+                            if(this.x <= rect1.x){
+                                this.x -=5;
+                            }
+                            else{
+                                this.x += 5;
+                            }
+                        }
+                    }; 
+                    var rect1 =this.box4.boxRect;
+                    if(rect1.x < rect2.x + rect2.width 
+                        && rect1.x + rect1.width > rect2.x 
+                        && rect1.y < rect2.y + rect2.height 
+                        && rect1.height + rect1.y > rect2.y){
+                            if(this.x >= rect1.x && this.x <= rect1.x + rect1.width){
+                                this.deltaY = this.deltaY * -1;
+                                if(this.y <= rect1.y){
+                                    this.y -= 5;
+                                }
+                                else{
+                                    this.y += 5;
+                                }
+                            }
+                            else if(this.y >= rect1.y && this.y <= rect1.y + rect1.height){
+                                this.deltaX = this.deltaX * -1;
+                                if(this.x <= rect1.x){
+                                    this.x -=5;
+                                }
+                                else{
+                                    this.x += 5;
+                                }
+                            }
+                        }; 
+    
+    
+    if(this.y >= 680 || this.y <= 20){
+        this.deltaY = this.deltaY *-1;
+    }
+    if(this.x >= 980 || this.x <= 20){
+        this.x = 500;
+        this.y = 400;
+        this.deltaX = (Math.random() *4) -3; 
+        this.deltaY = (Math.random() *4) -3; 
+    }
+    if(this.deltaX > 0){
+        this.deltaX += 0.005;
+    }
+    else{
+        this.deltaX -= 0.005;
+    }
+    if(this.deltaY > 0){
+        this.deltaY += 0.005;
+    }
+    else{
+        this.deltaY -= 0.005;
+    }
+    this.x += this.deltaX;
+    this.y += this.deltaY;
+    this.ballRect = {x:this.x - 20, y: this.y -20, width: this.width *2, height: this.height*2};
+};
+
+function leftScore(gameEngine, ctx){
+    this.gameEngine = gameEngine;
+    this.ctx = ctx;
+    this.score = 0;
+};
+
+leftScore.prototype = new Entity();
+leftScore.prototype.constructor = leftScore;
+
+leftScore.prototype.draw = function(){
+    this.ctx.font = "20px Arial";
+    this.ctx.fillText("Score: " + this.score, 100, 30);
+};
+
+leftScore.prototype.update = function(){
+    this.score = dataList.score1;
+    if(this.gameEngine.entities[0].x >= 980){
+        this.score ++;
+    }
+    if(this.gameEngine.entities[9].x >= 980){
+        this.score ++;
+    }
+    dataList.score1 = this.score;
+};
+
+
+function rightScore(gameEngine, ctx){
+    this.gameEngine = gameEngine;
+    this.ctx = ctx;
+    this.score = 0;
+};
+
+rightScore.prototype = new Entity();
+rightScore.prototype.constructor = rightScore;
+
+rightScore.prototype.draw = function(){
+    this.ctx.font = "20px Arial";
+    this.ctx.fillText("Score: " + this.score, 800, 30);
+};
+
+rightScore.prototype.update = function(){
+    this.score = dataList.score2;
+    if(this.gameEngine.entities[0].x <= 20){
+        this.score ++;
+    }
+    if(this.gameEngine.entities[9].x <= 20){
+        this.score ++;
+    }
+    dataList.score2 = this.score;
+};
+
+function box(gameEngine, ctx, x, y){
+    this.gameEngine = gameEngine;
+    this.ctx = ctx;
+    this.x = x;
+    this.y = y;
+    this.width = 80;
+    this.height = 80; 
+    this.boxRect = {x:this.x, y: this.y, width:this.width, height:this.height};
+};
+
+box.prototype = new Entity();
+box.prototype.constructor = box;
+
+box.prototype.draw = function(){
+    this.ctx.fillStyle = "white";
+    this.ctx.fillRect(this.x,this.y,this.width,this.height);
+
+};
+
+box.prototype.update = function(){
+    
+
+};
 
 
 AM.queueDownload("./img/BellmontMove.png");
-AM.queueDownload("./img/BelmontUp.png");
-AM.queueDownload("./img/BelmontDown.png");
-AM.queueDownload("./img/BelmontIdle.png");
-AM.queueDownload("./img/DraculasCastle.png");
-AM.queueDownload("./img/BelmontStanding.png");
-AM.queueDownload("./img/orb1.png");
-AM.queueDownload("./img/orb2.png");
-AM.queueDownload("./img/GodzillaWalk.png");
-AM.queueDownload("./img/GodzillaKick.png");
-AM.queueDownload("./img/GodzillaRampage.png");
+
+
 
 
 
 AM.downloadAll(function(){
     var canvas = document.getElementById("gameWorld");
     var ctx = canvas.getContext("2d");
-
     var gameEngine = new GameEngine();
     gameEngine.init(ctx);
     gameEngine.start();
 
-    gameEngine.addEntity(new Background(gameEngine, AM.getAsset("./img/DraculasCastle.png")));
-    gameEngine.addEntity(new Bellmont(gameEngine, AM.getAsset("./img/BellmontMove.png"), AM.getAsset("./img/BelmontUp.png"), AM.getAsset("./img/BelmontDown.png"), AM.getAsset("./img/BelmontIdle.png"), AM.getAsset("./img/BelmontStanding.png")));
-    gameEngine.addEntity(new Orb(gameEngine, AM.getAsset("./img/orb1.png"), AM.getAsset("./img/orb2.png")));
-    gameEngine.addEntity(new GameTimer(gameEngine));
-    gameEngine.addEntity(new Godzilla(gameEngine,  AM.getAsset("./img/GodzillaWalk.png"), AM.getAsset("./img/GodzillaKick.png"), AM.getAsset("./img/GodzillaRampage.png")   ));
+    gameEngine.addEntity(new ball(gameEngine, ctx));
+    gameEngine.addEntity(new leftBumper(gameEngine, ctx));
+    gameEngine.addEntity(new rightBumper(gameEngine, ctx));
+    gameEngine.addEntity(new leftScore(gameEngine, ctx));
+    gameEngine.addEntity(new rightScore(gameEngine, ctx));
+    gameEngine.addEntity(new box(gameEngine, ctx, 300,175));
+    gameEngine.addEntity(new box(gameEngine, ctx, 300,445));
+    gameEngine.addEntity(new box(gameEngine, ctx, 620,175));
+    gameEngine.addEntity(new box(gameEngine, ctx, 620,445));
+    gameEngine.addEntity(new ball(gameEngine, ctx));
 
-    
+
+
+
     console.log("Thats it folks!");
 });
-
 
